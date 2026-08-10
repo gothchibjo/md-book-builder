@@ -1,0 +1,11 @@
+# macOS Finder caches
+.DS_Store
+
+# Build artifacts
+/dist/
+/build/
+
+# Local book configurations contain paths to local knowledge bases and are
+# never committed. Use book.example.yaml as a template.
+/book.yaml
+*.book.yaml

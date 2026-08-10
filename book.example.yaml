@@ -1,0 +1,34 @@
+# Example book configuration.
+#
+# Copy this file to `book.yaml` next to the binary and adjust the paths.
+# All relative paths are resolved against the directory of this file.
+#
+# A document is "external" when it is part of the knowledge base but not
+# listed in `include`; links to external documents are rendered as plain
+# text instead of clickable links.
+
+title: "Knowledge Base — IT Department"
+subtitle: "Tech docs collection"
+kb_root: ../knowledge-base
+out: build/knowledge-base.pdf
+
+# Which heading levels appear in the table of contents:
+#   [1]    documents only
+#   [1, 2] documents and their second-level sections
+toc_levels: [1, 2]
+
+# The actual sections of the book, as globs relative to kb_root.
+include:
+  - docs/engineering/**/*.md
+  - docs/org/README.md
+  - docs/services/README.md
+  - docs/vendors/README.md
+  - docs/team/README.md
+  - docs/team/alice/README.md
+  - docs/team/bob/README.md
+  - docs/team/carol/README.md
+  - docs/team/dave/README.md
+
+# Optional: explicit Chrome/Chromium binary. When omitted the tool probes
+# well-known install locations (env MD_BOOK_BUILDER_CHROME wins first).
+# chrome_path: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome

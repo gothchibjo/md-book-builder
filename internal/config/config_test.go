@@ -40,3 +40,19 @@ func TestLoadRequiresFields(t *testing.T) {
 		t.Fatalf("expected 'out is required' error, got %v", err)
 	}
 }
+
+func TestLoadLocale(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "book.yaml")
+	content := "title: Example\nkb_root: kb\nout: out.pdf\ninclude: [a.md]\nlocale: ru\n"
+	if err := os.WriteFile(cfgPath, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c, err := Load(cfgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Locale != "ru" {
+		t.Errorf("Locale = %q, want %q", c.Locale, "ru")
+	}
+}

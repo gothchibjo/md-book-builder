@@ -9,7 +9,7 @@ All notable changes to this project are documented in this file.
 - Initial Go implementation of the markdown-to-PDF book builder, replacing
   the earlier Node.js prototype (kept only in git history on a legacy branch).
 - `md-book-builder build` renders a PDF from a `book.yaml` config with page
-  numbers (`стр. X из Y`), a cover page, a table of contents and a document
+  numbers (`Page X of Y`), a cover page, a table of contents and a document
   outline.
 - `md-book-builder verify` checks the book structure (documents, TOC entries,
   links, broken anchors) without launching Chrome.

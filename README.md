@@ -16,7 +16,7 @@
 
 - cross-references between documents become clickable links,
 - links to documents outside the selected set become plain text,
-- page numbers (`стр. X из Y`) and a PDF outline are added automatically,
+- page numbers (`Page X of Y`) and a PDF outline are added automatically,
 - the GitHub look is preserved (headings, tables, checklists, admonitions),
 - source files are only ever read, never modified.
 
@@ -67,6 +67,7 @@ stays elsewhere.
 | `toc_levels`  | `[1]` documents only (default) or `[1, 2]` plus H2 sections.                                                               |
 | `include`     | `**` globs of documents to assemble (`**/*.md` matches `README.md` too). Document order follows the order of the patterns. |
 | `chrome_path` | Optional explicit Chrome/Chromium binary.                                                                                  |
+| `locale`      | Footer language: `en` (default) or `ru`.                                                                                    |
 
 See `book.example.yaml` for a commented template.
 

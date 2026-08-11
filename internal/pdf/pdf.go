@@ -14,8 +14,19 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-// FooterTemplate is written at the bottom of every page.
-const FooterTemplate = `<div style="font-size:9px;width:100%;color:#57606a;text-align:center;">стр. <span class="pageNumber"></span> из <span class="totalPages"></span></div>`
+// FooterTemplate is written at the bottom of every page (English).
+const FooterTemplate = `<div style="font-size:9px;width:100%;color:#57606a;text-align:center;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>`
+
+// FooterTemplateFor returns the page-number footer template for a locale.
+// Unknown locales fall back to English.
+func FooterTemplateFor(locale string) string {
+	switch locale {
+	case "ru":
+		return `<div style="font-size:9px;width:100%;color:#57606a;text-align:center;">Стр. <span class="pageNumber"></span> из <span class="totalPages"></span></div>`
+	default:
+		return FooterTemplate
+	}
+}
 
 // DefaultChromePath returns the most likely Google Chrome binary on this host.
 func DefaultChromePath() string {
@@ -41,6 +52,7 @@ func DefaultChromePath() string {
 type Params struct {
 	ChromePath string
 	Out        string
+	Locale     string
 }
 
 // Render converts an HTML file into a PDF file.
@@ -80,7 +92,7 @@ func Render(htmlFile string, p Params) error {
 				WithPrintBackground(true).
 				WithDisplayHeaderFooter(true).
 				WithHeaderTemplate(`<div></div>`).
-				WithFooterTemplate(FooterTemplate).
+				WithFooterTemplate(FooterTemplateFor(p.Locale)).
 				WithPaperWidth(8.27).
 				WithPaperHeight(11.69).
 				WithMarginTop(0.55).

@@ -34,3 +34,6 @@ include:
 # Optional: explicit Chrome/Chromium binary. When omitted the tool probes
 # well-known install locations (env MD_BOOK_BUILDER_CHROME wins first).
 # chrome_path: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+
+# Optional: footer language. Supported values: "en" (default) and "ru".
+# locale: en

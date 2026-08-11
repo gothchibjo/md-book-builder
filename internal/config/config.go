@@ -17,6 +17,7 @@ type Config struct {
 	TOCLevels  []int    `yaml:"toc_levels"`
 	Include    []string `yaml:"include"`
 	ChromePath string   `yaml:"chrome_path,omitempty"`
+	Locale     string   `yaml:"locale,omitempty"`
 }
 
 // Load reads and validates a Config from path. All relative paths are

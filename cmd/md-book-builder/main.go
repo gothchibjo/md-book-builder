@@ -71,7 +71,7 @@ func newRootCmd() *cobra.Command {
 				cmd.Println("HTML:", htmlPath)
 			}
 
-			if err := pdf.Render(htmlFile, pdf.Params{ChromePath: cfg.ChromePath, Out: cfg.Out}); err != nil {
+			if err := pdf.Render(htmlFile, pdf.Params{ChromePath: cfg.ChromePath, Out: cfg.Out, Locale: cfg.Locale}); err != nil {
 				return err
 			}
 			cmd.Printf("PDF: %s (%d documents)\n", cfg.Out, doc.Stats.Documents)

@@ -32,9 +32,11 @@ type Doc struct {
 	Body    string // markdown body without frontmatter or comments
 }
 
-// Scan resolves the include globs under root and returns the matched docs
-// ordered by directory (alphabetical), then by file name with README.md
-// first within each directory.
+// Scan resolves the include globs under root and returns the matched docs in
+// the order the patterns appear in include. Within one pattern the matches
+// are ordered by directory (alphabetical), then by file name with README.md
+// first within each directory. A file matching several patterns appears only
+// once, in the group of the first matching pattern.
 func Scan(root string, include []string) ([]Doc, error) {
 	seen := map[string]bool{}
 	var rels []string
@@ -44,6 +46,7 @@ func Scan(root string, include []string) ([]Doc, error) {
 		if err != nil {
 			return nil, err
 		}
+		var group []string
 		for _, m := range matches {
 			rel, err := filepath.Rel(root, m)
 			if err != nil {
@@ -57,22 +60,22 @@ func Scan(root string, include []string) ([]Doc, error) {
 				continue
 			}
 			seen[rel] = true
-			rels = append(rels, rel)
+			group = append(group, rel)
 		}
+		sort.SliceStable(group, func(i, j int) bool {
+			a, b := group[i], group[j]
+			da, db := filepath.Dir(a), filepath.Dir(b)
+			if da != db {
+				return da < db
+			}
+			ra, rb := isReadme(a), isReadme(b)
+			if ra != rb {
+				return ra
+			}
+			return a < b
+		})
+		rels = append(rels, group...)
 	}
-
-	sort.SliceStable(rels, func(i, j int) bool {
-		a, b := rels[i], rels[j]
-		da, db := filepath.Dir(a), filepath.Dir(b)
-		if da != db {
-			return da < db
-		}
-		ra, rb := isReadme(a), isReadme(b)
-		if ra != rb {
-			return ra
-		}
-		return a < b
-	})
 
 	docs := make([]Doc, 0, len(rels))
 	for _, rel := range rels {

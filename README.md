@@ -58,15 +58,15 @@ All relative paths in the config are resolved against the config file's
 directory, so the config can live next to the binary while the knowledge base
 stays elsewhere.
 
-| key           | description                                                                   |
-| ------------- | ----------------------------------------------------------------------------- |
-| `title`       | Book title shown on the cover page. Required.                                 |
-| `subtitle`    | Optional subtitle on the cover page.                                          |
-| `kb_root`     | Knowledge base root directory. Required.                                      |
-| `out`         | Output PDF path. Required.                                                    |
-| `toc_levels`  | `[1]` documents only (default) or `[1, 2]` plus H2 sections.                  |
-| `include`     | `**` globs of documents to assemble (`**/*.md` matches `README.md` too).      |
-| `chrome_path` | Optional explicit Chrome/Chromium binary.                                     |
+| key           | description                                                                                                                |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `title`       | Book title shown on the cover page. Required.                                                                              |
+| `subtitle`    | Optional subtitle on the cover page.                                                                                       |
+| `kb_root`     | Knowledge base root directory. Required.                                                                                   |
+| `out`         | Output PDF path. Required.                                                                                                 |
+| `toc_levels`  | `[1]` documents only (default) or `[1, 2]` plus H2 sections.                                                               |
+| `include`     | `**` globs of documents to assemble (`**/*.md` matches `README.md` too). Document order follows the order of the patterns. |
+| `chrome_path` | Optional explicit Chrome/Chromium binary.                                                                                  |
 
 See `book.example.yaml` for a commented template.
 

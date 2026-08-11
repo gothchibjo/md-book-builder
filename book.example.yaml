@@ -17,7 +17,9 @@ out: build/knowledge-base.pdf
 #   [1, 2] documents and their second-level sections
 toc_levels: [1, 2]
 
-# The actual sections of the book, as globs relative to kb_root.
+# The sections of the book, as globs relative to kb_root. Documents appear in
+# the book in the order of this list; within one pattern they are ordered by
+# directory, README.md first in each directory.
 include:
   - docs/engineering/**/*.md
   - docs/org/README.md

@@ -66,3 +66,51 @@ func TestScanOrdering(t *testing.T) {
 		t.Fatalf("order:\n got %v\nwant %v", got, want)
 	}
 }
+
+func TestScanRespectsIncludeOrder(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "org/README.md", "# Org\n")
+	write(t, dir, "employees/README.md", "# Employees\n")
+	write(t, dir, "regulations/README.md", "# Regulations\n")
+	write(t, dir, "regulations/B/B-001.md", "# B1\n")
+	write(t, dir, "regulations/A/A-001.md", "# A1\n")
+	write(t, dir, "employees/alpha.md", "# Alpha\n")
+
+	docs, err := Scan(dir, []string{"regulations/**/*.md", "employees/**/*.md", "org/README.md"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := []string{}
+	for _, d := range docs {
+		got = append(got, d.RelPath)
+	}
+	want := []string{
+		"regulations/README.md",
+		"regulations/A/A-001.md",
+		"regulations/B/B-001.md",
+		"employees/README.md",
+		"employees/alpha.md",
+		"org/README.md",
+	}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("order:\n got %v\nwant %v", got, want)
+	}
+}
+
+func TestScanDedupesOverlappingPatterns(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "team/alice/README.md", "# Alice\n")
+	write(t, dir, "team/bob/README.md", "# Bob\n")
+
+	docs, err := Scan(dir, []string{"team/alice/*.md", "team/**/*.md"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := []string{}
+	for _, d := range docs {
+		got = append(got, d.RelPath)
+	}
+	if strings.Join(got, ",") != "team/alice/README.md,team/bob/README.md" {
+		t.Fatalf("got %v, want first pattern to win and no duplicates", got)
+	}
+}

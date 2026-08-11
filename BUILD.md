@@ -44,7 +44,7 @@ The only external component is Chrome/Chromium. Detection order:
 
 ## CI usage
 
-```
+```bash
 ./scripts/build.sh
 ./scripts/test.sh   # go vet ./... && go test ./...
 ```

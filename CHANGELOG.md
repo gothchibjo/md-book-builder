@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented in this file.
 
+## v0.2.0 - 2026-08-12
+
+### Added
+
+- GitHub Actions release workflow (`.github/workflows/release.yml`): on a `v*`
+  tag push it runs vet and tests, cross-compiles the binaries, writes
+  `SHA256SUMS` and publishes a GitHub Release with the artifacts.
+- `linux/arm64` build target in `scripts/build.sh`.
+
 ## v0.1.0 - 2026-08-10
 
 ### Added

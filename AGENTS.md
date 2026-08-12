@@ -17,6 +17,9 @@ High-level structure:
 - `internal/book`: assembly — link fixing, frontmatter tables, TOC, final HTML.
 - `internal/pdf`: headless Chrome printing (chromedp) and PDF output.
 - `internal/assets`: embedded stylesheets (github-markdown.css + book.css).
+- `scripts`: `build.sh` (cross-compiles all targets) and `test.sh` (vet + test).
+- `.github/workflows/release.yml`: builds binaries and publishes a GitHub
+  Release when a `v*` tag is pushed.
 
 Engineering priorities:
 

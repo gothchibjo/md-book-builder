@@ -23,6 +23,7 @@ build() {
 build darwin amd64 md-book-builder_darwin_amd64
 build darwin arm64 md-book-builder_darwin_arm64
 build linux  amd64 md-book-builder_linux_amd64
+build linux  arm64 md-book-builder_linux_arm64
 build windows amd64 md-book-builder_windows_amd64.exe
 
 printf "\nVersion: %s\n" "$VERSION"

@@ -51,3 +51,11 @@ The only external component is Chrome/Chromium. Detection order:
 
 Binaries are static Go executables; only the Chrome binary is fetched at
 runtime from the machine that runs the build.
+
+## Release automation
+
+Pushing an annotated tag (`vMAJOR.MINOR.PATCH`) triggers the
+`.github/workflows/release.yml` workflow. It runs vet and tests, builds the
+four platform binaries with the tag as version, computes `SHA256SUMS`, and
+publishes them as a GitHub Release. Remember to update `CHANGELOG.md` before
+creating the tag.

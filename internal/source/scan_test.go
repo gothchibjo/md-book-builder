@@ -159,3 +159,52 @@ func TestLoad(t *testing.T) {
 		t.Error("HTML comment leaked into Body")
 	}
 }
+
+func TestExclude(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "a/README.md", "# A\n")
+	write(t, dir, "a/X.md", "# X\n")
+	write(t, dir, "a/sub/Y.md", "# Y\n")
+	write(t, dir, "a/sub/deep/Z.md", "# Z\n")
+	write(t, dir, "b/B.md", "# B\n")
+
+	docs, err := Scan(dir, []string{"a/**/*.md", "b/*.md"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := rels(docs)
+	if strings.Join(got, ",") != "a/README.md,a/X.md,a/sub/Y.md,a/sub/deep/Z.md,b/B.md" {
+		t.Fatalf("unexpected scan result %v", got)
+	}
+
+	cases := []struct {
+		name string
+		excl []string
+		want string
+	}{
+		{"file without suffix", []string{"a/X"}, "a/README.md,a/sub/Y.md,a/sub/deep/Z.md,b/B.md"},
+		{"file with suffix", []string{"a/X.md"}, "a/README.md,a/sub/Y.md,a/sub/deep/Z.md,b/B.md"},
+		{"folder", []string{"a/sub/"}, "a/README.md,a/X.md,b/B.md"},
+		{"mask", []string{"**/Y.md"}, "a/README.md,a/X.md,a/sub/deep/Z.md,b/B.md"},
+		{"mask with suffix", []string{"a/sub/*"}, "a/README.md,a/X.md,a/sub/deep/Z.md,b/B.md"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			filtered, err := Exclude(dir, append([]Doc(nil), docs...), c.excl)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Join(rels(filtered), ",") != c.want {
+				t.Errorf("Exclude(%v) = %v, want %v", c.excl, rels(filtered), c.want)
+			}
+		})
+	}
+}
+
+func rels(docs []Doc) []string {
+	out := make([]string, 0, len(docs))
+	for _, d := range docs {
+		out = append(out, d.RelPath)
+	}
+	return out
+}

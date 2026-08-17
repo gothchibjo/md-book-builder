@@ -17,6 +17,14 @@ out: build/knowledge-base.pdf
 #   [1, 2] documents and their second-level sections
 toc_levels: [1, 2]
 
+# Render the table of contents (default true). Set to false for single-
+# document conversions.
+# toc: true
+
+# Render the title page (cover) with title and subtitle (default true). Set
+# to false for single-document conversions.
+# cover: true
+
 # The sections of the book. Globs (patterns with * ? [ {) match documents
 # directly. A plain directory entry (no mask, like docs/team/ below) declares
 # a "link-root": documents in that directory are collected only when they are
@@ -35,6 +43,12 @@ include:
   - docs/team/bob/README.md
   - docs/team/carol/README.md
   - docs/team/dave/README.md
+
+# Optional: patterns excluded from the book, applied after include. Accepts
+# files, masks and folders: "docs/team/alice/README.md", "docs/org/**",
+# "docs/team/" or "docs/team/bob" (the .md suffix is optional).
+# exclude:
+#   - docs/team/bob
 
 # When a link-root document is pulled in, keep following its internal links
 # into other link-root directories transitively (default true). When false,

@@ -15,7 +15,10 @@ type Config struct {
 	KBRoot          string   `yaml:"kb_root"`
 	Out             string   `yaml:"out"`
 	TOCLevels       []int    `yaml:"toc_levels"`
+	TOC             *bool    `yaml:"toc,omitempty"`
+	Cover           *bool    `yaml:"cover,omitempty"`
 	Include         []string `yaml:"include"`
+	Exclude         []string `yaml:"exclude,omitempty"`
 	TransitiveLinks *bool    `yaml:"transitive_links,omitempty"`
 	ChromePath      string   `yaml:"chrome_path,omitempty"`
 	Locale          string   `yaml:"locale,omitempty"`
@@ -75,4 +78,16 @@ func resolveRelative(base, p string) string {
 // is omitted from the config.
 func (c *Config) Transitive() bool {
 	return c.TransitiveLinks == nil || *c.TransitiveLinks
+}
+
+// ShowTOC reports whether the table of contents should be rendered. It
+// defaults to true when the option is omitted from the config.
+func (c *Config) ShowTOC() bool {
+	return c.TOC == nil || *c.TOC
+}
+
+// ShowCover reports whether the title page should be rendered. It defaults to
+// true when the option is omitted from the config.
+func (c *Config) ShowCover() bool {
+	return c.Cover == nil || *c.Cover
 }

@@ -113,6 +113,14 @@ func TestBuildAndLinkResolution(t *testing.T) {
 		t.Errorf("BrokenAnchors = %d, want 0", st.BrokenAnchors)
 	}
 
+	// Order: cover first, then TOC, then the document body.
+	cover := strings.Index(doc.HTML, `<article class="book-cover">`)
+	toc := strings.Index(doc.HTML, `<nav class="book-toc">`)
+	main := strings.Index(doc.HTML, `<main class="markdown-body">`)
+	if !(cover >= 0 && cover < toc && toc < main) {
+		t.Errorf("expected cover before TOC before body, got cover=%d toc=%d main=%d", cover, toc, main)
+	}
+
 	// The flattened reference keeps its label text but is no longer a link.
 	if !strings.Contains(doc.HTML, "ITG-P-001") {
 		t.Error("flattened label text missing from output")
@@ -307,6 +315,76 @@ func TestLinkRootCollectionDirectOnly(t *testing.T) {
 	st := doc.Stats
 	if st.Documents != 3 {
 		t.Errorf("Documents = %d, want 3", st.Documents)
+	}
+	if st.InternalLinks != 1 {
+		t.Errorf("InternalLinks = %d, want 1", st.InternalLinks)
+	}
+	if st.Flattened != 2 {
+		t.Errorf("Flattened = %d, want 2", st.Flattened)
+	}
+}
+
+func TestNoTOCAndNoCover(t *testing.T) {
+	dir := t.TempDir()
+	writeKB(t, dir)
+	cfg := &config.Config{
+		Title:     "Example",
+		KBRoot:    dir,
+		Out:       filepath.Join(dir, "out.pdf"),
+		TOCLevels: []int{1},
+		TOC:       boolPtr(false),
+		Cover:     boolPtr(false),
+		Include:   []string{"regulations/INF/INF-R-001.md"},
+	}
+	b, err := New(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err := b.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(doc.HTML, `<nav class="book-toc">`) {
+		t.Error("TOC rendered despite toc: false")
+	}
+	if strings.Contains(doc.HTML, `<article class="book-cover">`) {
+		t.Error("cover rendered despite cover: false")
+	}
+	if !strings.Contains(doc.HTML, `<main class="markdown-body">`) {
+		t.Error("document body missing")
+	}
+	if doc.Stats.TOCEntries != 0 {
+		t.Errorf("TOCEntries = %d, want 0", doc.Stats.TOCEntries)
+	}
+}
+
+func TestExcludeAfterCollection(t *testing.T) {
+	dir := t.TempDir()
+	writeLinkRootKB(t, dir)
+
+	cfg := &config.Config{
+		Title:     "Example",
+		KBRoot:    dir,
+		Out:       filepath.Join(dir, "out.pdf"),
+		TOCLevels: []int{1},
+		Include:   []string{"regulations/**/*.md", "itg/"},
+		Exclude:   []string{"itg/ITG-P-002"},
+	}
+	b, err := New(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err := b.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	st := doc.Stats
+	if st.Documents != 4 {
+		t.Errorf("Documents = %d, want 4", st.Documents)
+	}
+	if strings.Contains(doc.HTML, `<section class="book-doc" id="itg-p-002"`) {
+		t.Error("excluded document itg/ITG-P-002.md still in the book")
 	}
 	if st.InternalLinks != 1 {
 		t.Errorf("InternalLinks = %d, want 1", st.InternalLinks)

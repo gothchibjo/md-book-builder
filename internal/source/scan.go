@@ -140,6 +140,55 @@ func isDir(p string) bool {
 	return err == nil && info.IsDir()
 }
 
+// Exclude removes from docs every document matching one of the exclude
+// patterns. Patterns are globs relative to root, like include. A pattern
+// naming an existing directory removes all documents under it; a pattern
+// without a `.md` suffix also matches the file with `.md` appended (so
+// `a/X` excludes `a/X.md`).
+func Exclude(root string, docs []Doc, exclude []string) ([]Doc, error) {
+	if len(exclude) == 0 {
+		return docs, nil
+	}
+	pats := make([]string, 0, len(exclude))
+	for _, p := range exclude {
+		pat := filepath.ToSlash(filepath.Clean(p))
+		if isDir(filepath.Join(root, filepath.FromSlash(pat))) {
+			pat = pat + "/"
+		}
+		pats = append(pats, pat)
+	}
+	out := docs[:0]
+	for _, d := range docs {
+		if matchesAny(d.RelPath, pats) {
+			continue
+		}
+		out = append(out, d)
+	}
+	return out, nil
+}
+
+func matchesAny(rel string, pats []string) bool {
+	for _, pat := range pats {
+		if strings.HasSuffix(pat, "/") {
+			if rel == strings.TrimSuffix(pat, "/") || strings.HasPrefix(rel, pat) {
+				return true
+			}
+			continue
+		}
+		ok, err := doublestar.Match(pat, rel)
+		if err == nil && ok {
+			return true
+		}
+		if !strings.HasSuffix(strings.ToLower(pat), ".md") {
+			ok, err = doublestar.Match(pat+".md", rel)
+			if err == nil && ok {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func isReadme(p string) bool {
 	return strings.EqualFold(filepath.Base(p), "README.md")
 }

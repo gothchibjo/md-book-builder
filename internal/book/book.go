@@ -60,6 +60,10 @@ func New(cfg *config.Config) (*Builder, error) {
 	if err != nil {
 		return nil, err
 	}
+	docs, err = source.Exclude(kbRoot, docs, cfg.Exclude)
+	if err != nil {
+		return nil, err
+	}
 	b := &Builder{
 		cfg:    cfg,
 		kbRoot: kbRoot,
@@ -217,16 +221,21 @@ func (b *Builder) Build() (*Book, error) {
 	}
 
 	b.stats.Documents = len(b.docs)
-	b.stats.TOCEntries = len(b.docs)
-
-	subtitle := ""
-	if b.cfg.Subtitle != "" {
-		subtitle = "<p>" + html.EscapeString(b.cfg.Subtitle) + "</p>"
+	if b.cfg.ShowTOC() {
+		b.stats.TOCEntries = len(b.docs)
 	}
 
-	full := `<article class="book-cover"><h1>` + html.EscapeString(b.cfg.Title) + `</h1>` + subtitle + `</article>`
-	full += `<nav class="book-toc"><h1>Содержание</h1><ul>` + strings.Join(tocItems, "\n") + `</ul></nav>`
-	full += `<main class="markdown-body">` + body.String() + `</main>`
+	full := `<main class="markdown-body">` + body.String() + `</main>`
+	if b.cfg.ShowTOC() {
+		full = `<nav class="book-toc"><h1>Содержание</h1><ul>` + strings.Join(tocItems, "\n") + `</ul></nav>` + full
+	}
+	if b.cfg.ShowCover() {
+		subtitle := ""
+		if b.cfg.Subtitle != "" {
+			subtitle = "<p>" + html.EscapeString(b.cfg.Subtitle) + "</p>"
+		}
+		full = `<article class="book-cover"><h1>` + html.EscapeString(b.cfg.Title) + `</h1>` + subtitle + `</article>` + full
+	}
 
 	bookHTML := wrapHTML(full, b.cfg.Title)
 	b.stats.BrokenAnchors = countBrokenAnchors(bookHTML)

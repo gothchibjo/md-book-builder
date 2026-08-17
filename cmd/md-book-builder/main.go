@@ -81,7 +81,7 @@ func newRootCmd() *cobra.Command {
 			return nil
 		},
 	}
-	buildCmd.Flags().StringVar(&out, "out", "", "override the output PDF path from the config")
+	buildCmd.Flags().StringVarP(&out, "out", "o", "", "override the output PDF path from the config")
 	buildCmd.Flags().StringVar(&htmlPath, "html", "", "also write the assembled HTML to this path")
 	buildCmd.Flags().BoolVar(&open, "open", false, "open the produced PDF in the default viewer")
 

@@ -46,21 +46,31 @@ type Builder struct {
 	stats  Stats
 }
 
-// New resolves and scans sources for cfg.
-func New(cfg *config.Config) (*Builder, error) {
+// Collect resolves config paths, scans sources, follows link-roots and applies
+// excludes, returning the ordered documents of the book.
+func Collect(cfg *config.Config) ([]source.Doc, string, error) {
 	kbRoot, err := filepath.Abs(cfg.KBRoot)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	docs, err := source.Scan(kbRoot, cfg.Include)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	docs, err = expandByLinks(kbRoot, docs, cfg.Include, cfg.Transitive())
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	docs, err = source.Exclude(kbRoot, docs, cfg.Exclude)
+	if err != nil {
+		return nil, "", err
+	}
+	return docs, kbRoot, nil
+}
+
+// New resolves and scans sources for cfg.
+func New(cfg *config.Config) (*Builder, error) {
+	docs, kbRoot, err := Collect(cfg)
 	if err != nil {
 		return nil, err
 	}

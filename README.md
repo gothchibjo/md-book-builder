@@ -76,12 +76,17 @@ See `book.example.yaml` for a commented template.
 ```
 md-book-builder build CONFIG.yaml [--out path] [--html path] [--open]
 md-book-builder verify CONFIG.yaml [--html path]
+md-book-builder expand CONFIG.yaml
 md-book-builder version
 ```
 
 - `build` renders the PDF. `--open` reveals it in the default viewer (handy
   for an Automator action). `--html` additionally writes the assembled HTML.
 - `verify` validates the structure without launching Chrome.
+- `expand` prints the ordered document list of the book as a ready-to-paste
+  `include:` block. It collects documents with the same algorithms as `build`
+  (globs, link-roots, excludes) but does not render anything, so the list can
+  be reordered manually and pasted back into the config to control page order.
 - The Chrome binary is auto-detected; override with the `chrome_path` config
   key or the `MD_BOOK_BUILDER_CHROME` environment variable.
 

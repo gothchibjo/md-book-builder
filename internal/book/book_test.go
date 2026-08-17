@@ -393,3 +393,33 @@ func TestExcludeAfterCollection(t *testing.T) {
 		t.Errorf("Flattened = %d, want 2", st.Flattened)
 	}
 }
+
+func TestCollect(t *testing.T) {
+	dir := t.TempDir()
+	writeLinkRootKB(t, dir)
+	cfg := &config.Config{
+		Title:     "Example",
+		KBRoot:    dir,
+		Out:       filepath.Join(dir, "out.pdf"),
+		TOCLevels: []int{1},
+		Include:   []string{"regulations/**/*.md", "itg/"},
+		Exclude:   []string{"itg/ITG-P-002"},
+	}
+	docs, _, err := Collect(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := make([]string, 0, len(docs))
+	for _, d := range docs {
+		got = append(got, d.RelPath)
+	}
+	want := []string{
+		"regulations/README.md",
+		"regulations/INF/INF-R-001.md",
+		"itg/ITG-P-001.md",
+		"itg/ITG-P-003.md",
+	}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Fatalf("Collect order:\n got %v\nwant %v", got, want)
+	}
+}

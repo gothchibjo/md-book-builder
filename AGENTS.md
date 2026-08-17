@@ -9,14 +9,15 @@ set become plain text.
 
 High-level structure:
 
-- `cmd/md-book-builder`: cobra CLI (`build`, `verify`, `version`).
+- `cmd/md-book-builder`: cobra CLI (`build`, `verify`, `expand`, `version`).
 - `internal/config`: YAML book configuration (see `book.example.yaml`).
 - `internal/source`: knowledge-base scanning, frontmatter parsing, ordering,
   pattern classification and per-document loading.
 - `internal/markup`: GitHub-flavored markdown rendering, heading anchors,
   admonitions and link extraction (goldmark + AST transformer).
 - `internal/book`: assembly — link-root collection by internal links, link
-  fixing, frontmatter tables, TOC, final HTML.
+  fixing, frontmatter tables, TOC, final HTML. `Collect` runs the shared
+  scan/follow/exclude pipeline reused by `build`, `verify` and `expand`.
 - `internal/pdf`: headless Chrome printing (chromedp) and PDF output.
 - `internal/assets`: embedded stylesheets (github-markdown.css + book.css).
 - `scripts`: `build.sh` (cross-compiles all targets) and `test.sh` (vet + test).

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -139,6 +140,32 @@ func newRootCmd() *cobra.Command {
 		},
 	}
 
-	root.AddCommand(buildCmd, verifyCmd, versionCmd)
+	expandCmd := &cobra.Command{
+		Use:   "expand CONFIG.yaml",
+		Short: "Print the ordered document list as an include block",
+		Long: "expand collects the documents exactly like build does (globs,\n" +
+			"link-roots, excludes) but instead of rendering prints them as a\n" +
+			"ready-to-paste include block for manual ordering.",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.Load(args[0])
+			if err != nil {
+				return err
+			}
+			docs, _, err := book.Collect(cfg)
+			if err != nil {
+				return err
+			}
+			var b strings.Builder
+			b.WriteString("include:\n")
+			for _, d := range docs {
+				b.WriteString("  - " + d.RelPath + "\n")
+			}
+			_, err = cmd.OutOrStdout().Write([]byte(b.String()))
+			return err
+		},
+	}
+
+	root.AddCommand(buildCmd, verifyCmd, versionCmd, expandCmd)
 	return root
 }

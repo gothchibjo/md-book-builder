@@ -56,6 +56,10 @@ func New(cfg *config.Config) (*Builder, error) {
 	if err != nil {
 		return nil, err
 	}
+	docs, err = expandByLinks(kbRoot, docs, cfg.Include, cfg.Transitive())
+	if err != nil {
+		return nil, err
+	}
 	b := &Builder{
 		cfg:    cfg,
 		kbRoot: kbRoot,
@@ -82,6 +86,94 @@ func sectionID(d *source.Doc) string {
 	}
 	base := strings.TrimSuffix(d.RelPath, filepath.Ext(d.RelPath))
 	return markup.Slug(strings.ReplaceAll(base, "/", " "))
+}
+
+// expandByLinks appends documents that are referenced by internal links and
+// resolve into one of the declared link-root directories (plain directory
+// entries in include). The link-root directories themselves are never
+// browsed. When transitive is true, documents pulled in by links are followed
+// further until a fixpoint.
+func expandByLinks(kbRoot string, docs []source.Doc, include []string, transitive bool) ([]source.Doc, error) {
+	_, linkRoots := source.ClassifyPatterns(kbRoot, include)
+	if len(linkRoots) == 0 {
+		return docs, nil
+	}
+	set := map[string]bool{}
+	for _, d := range docs {
+		set[d.RelPath] = true
+	}
+	queue := append([]source.Doc(nil), docs...)
+	pulled := map[string]source.Doc{}
+	for len(queue) > 0 {
+		d := queue[0]
+		queue = queue[1:]
+		links, err := markup.ExtractLinks(d.Body)
+		if err != nil {
+			return nil, fmt.Errorf("collect links from %s: %w", d.RelPath, err)
+		}
+		for _, href := range links {
+			if isExternal(href) {
+				continue
+			}
+			p, _ := splitFragment(href)
+			if p == "" {
+				continue
+			}
+			rel, ok := resolveRel(kbRoot, d.AbsPath, p)
+			if !ok {
+				continue
+			}
+			if !strings.HasSuffix(strings.ToLower(rel), ".md") {
+				continue
+			}
+			if set[rel] || !underAnyLinkRoot(rel, linkRoots) {
+				continue
+			}
+			nd, err := source.Load(kbRoot, rel)
+			if err != nil {
+				return nil, fmt.Errorf("load %s: %w", rel, err)
+			}
+			set[rel] = true
+			pulled[rel] = nd
+			if transitive {
+				queue = append(queue, nd)
+			}
+		}
+	}
+	if len(pulled) == 0 {
+		return docs, nil
+	}
+	rels := make([]string, 0, len(pulled))
+	for rel := range pulled {
+		rels = append(rels, rel)
+	}
+	source.SortRels(rels)
+	for _, rel := range rels {
+		docs = append(docs, pulled[rel])
+	}
+	return docs, nil
+}
+
+// underAnyLinkRoot reports whether rel is inside one of the roots.
+func underAnyLinkRoot(rel string, roots []string) bool {
+	for _, r := range roots {
+		if rel == r || strings.HasPrefix(rel, r+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveRel resolves a relative reference ref (path, fragment or both)
+// against the directory of dAbs and returns the cleaned relative path under
+// kbRoot.
+func resolveRel(kbRoot, dAbs, ref string) (string, bool) {
+	target := filepath.Clean(filepath.Join(filepath.Dir(dAbs), filepath.FromSlash(ref)))
+	rel, err := filepath.Rel(kbRoot, target)
+	if err != nil {
+		return "", false
+	}
+	return filepath.ToSlash(rel), true
 }
 
 // Build renders every document, fixes links and assembles the final HTML.
@@ -220,11 +312,9 @@ func (b *Builder) fixLinks(docHTML string, d source.Doc) (string, error) {
 			if p == "" {
 				continue
 			}
-			target := filepath.Clean(filepath.Join(filepath.Dir(d.AbsPath), filepath.FromSlash(p)))
-			rel, err := filepath.Rel(b.kbRoot, target)
-			key := filepath.ToSlash(rel)
-			if err == nil {
-				if id, ok := b.relIDs[key]; ok {
+			rel, ok := resolveRel(b.kbRoot, d.AbsPath, p)
+			if ok {
+				if id, ok := b.relIDs[rel]; ok {
 					b.stats.InternalLinks++
 					setAttr(n, "href", "#"+id)
 					continue

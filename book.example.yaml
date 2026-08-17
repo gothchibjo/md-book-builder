@@ -17,19 +17,29 @@ out: build/knowledge-base.pdf
 #   [1, 2] documents and their second-level sections
 toc_levels: [1, 2]
 
-# The sections of the book, as globs relative to kb_root. Documents appear in
-# the book in the order of this list; within one pattern they are ordered by
-# directory, README.md first in each directory.
+# The sections of the book. Globs (patterns with * ? [ {) match documents
+# directly. A plain directory entry (no mask, like docs/team/ below) declares
+# a "link-root": documents in that directory are collected only when they are
+# referenced by an internal link from an already-included document; the
+# directory itself is never browsed. Documents appear in the book in the order
+# of this list; within one pattern they are ordered by directory, README.md
+# first in each directory.
 include:
   - docs/engineering/**/*.md
   - docs/org/README.md
   - docs/services/README.md
   - docs/vendors/README.md
   - docs/team/README.md
+  - docs/team/
   - docs/team/alice/README.md
   - docs/team/bob/README.md
   - docs/team/carol/README.md
   - docs/team/dave/README.md
+
+# When a link-root document is pulled in, keep following its internal links
+# into other link-root directories transitively (default true). When false,
+# only documents referenced directly by glob-matched documents are collected.
+# transitive_links: true
 
 # Optional: explicit Chrome/Chromium binary. When omitted the tool probes
 # well-known install locations (env MD_BOOK_BUILDER_CHROME wins first).

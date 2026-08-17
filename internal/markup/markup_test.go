@@ -55,3 +55,38 @@ func TestHeadingIDs(t *testing.T) {
 		}
 	}
 }
+
+func TestExtractLinks(t *testing.T) {
+	body := `См. [раздел](../ITG/ITG-P-001.md#anchor) и [это](./B.md).
+
+![img](../../assets/pic.png)
+
+Ссылка по определению: [реестр][ref].
+
+Автоссылка: <https://example.com>.
+
+<!-- refs -->
+
+[ref]: ./refs/registry.md
+`
+	links, err := ExtractLinks(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	joined := strings.Join(links, ",")
+	want := []string{
+		"../ITG/ITG-P-001.md#anchor",
+		"./B.md",
+		"../../assets/pic.png",
+		"./refs/registry.md",
+		"https://example.com",
+	}
+	for _, w := range want {
+		if !strings.Contains(joined, w) {
+			t.Errorf("missing %q in %v", w, links)
+		}
+	}
+	if len(links) != len(want) {
+		t.Errorf("got %d links %v, want %d", len(links), links, len(want))
+	}
+}

@@ -11,10 +11,12 @@ High-level structure:
 
 - `cmd/md-book-builder`: cobra CLI (`build`, `verify`, `version`).
 - `internal/config`: YAML book configuration (see `book.example.yaml`).
-- `internal/source`: knowledge-base scanning, frontmatter parsing, ordering.
-- `internal/markup`: GitHub-flavored markdown rendering, heading anchors and
-  admonitions (goldmark + AST transformer).
-- `internal/book`: assembly — link fixing, frontmatter tables, TOC, final HTML.
+- `internal/source`: knowledge-base scanning, frontmatter parsing, ordering,
+  pattern classification and per-document loading.
+- `internal/markup`: GitHub-flavored markdown rendering, heading anchors,
+  admonitions and link extraction (goldmark + AST transformer).
+- `internal/book`: assembly — link-root collection by internal links, link
+  fixing, frontmatter tables, TOC, final HTML.
 - `internal/pdf`: headless Chrome printing (chromedp) and PDF output.
 - `internal/assets`: embedded stylesheets (github-markdown.css + book.css).
 - `scripts`: `build.sh` (cross-compiles all targets) and `test.sh` (vet + test).
@@ -25,6 +27,10 @@ Engineering priorities:
 
 - Match GitHub renderer behavior for headings/anchors and `> [!NOTE]` alerts.
 - Respect that source documents are read-only.
+- Link-root collection: a plain directory entry in `include` (e.g. `docs/team/`)
+  collects only documents referenced by internal links; the directory itself
+  is never browsed. `transitive_links` (default true) controls whether pulled
+  documents are followed further.
 - Keep `verify` runnable without Chrome (pure Go) so CI can validate links.
 - Keep the binary self-contained: the only external dependency at runtime is
   a Chrome/Chromium binary.

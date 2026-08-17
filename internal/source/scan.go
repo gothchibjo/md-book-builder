@@ -62,42 +62,82 @@ func Scan(root string, include []string) ([]Doc, error) {
 			seen[rel] = true
 			group = append(group, rel)
 		}
-		sort.SliceStable(group, func(i, j int) bool {
-			a, b := group[i], group[j]
-			da, db := filepath.Dir(a), filepath.Dir(b)
-			if da != db {
-				return da < db
-			}
-			ra, rb := isReadme(a), isReadme(b)
-			if ra != rb {
-				return ra
-			}
-			return a < b
-		})
+		SortRels(group)
 		rels = append(rels, group...)
 	}
 
 	docs := make([]Doc, 0, len(rels))
 	for _, rel := range rels {
-		abs := filepath.Join(root, filepath.FromSlash(rel))
-		data, err := os.ReadFile(abs)
+		d, err := Load(root, rel)
 		if err != nil {
 			return nil, err
 		}
-		front, body := SplitFrontmatter(data)
-		kv := keyvals(front)
-		d := Doc{
-			RelPath: rel,
-			AbsPath: abs,
-			Code:    kv["code"],
-			Title:   kv["title"],
-			Front:   front,
-			Body:    stripComments(string(body)),
-		}
-		d.H1 = firstH1(d.Body)
 		docs = append(docs, d)
 	}
 	return docs, nil
+}
+
+// SortRels orders relative document paths by directory (alphabetical), then
+// by file name with README.md first within each directory.
+func SortRels(rels []string) {
+	sort.SliceStable(rels, func(i, j int) bool {
+		a, b := rels[i], rels[j]
+		da, db := filepath.Dir(a), filepath.Dir(b)
+		if da != db {
+			return da < db
+		}
+		ra, rb := isReadme(a), isReadme(b)
+		if ra != rb {
+			return ra
+		}
+		return a < b
+	})
+}
+
+// Load reads one markdown document by its path relative to root.
+func Load(root, rel string) (Doc, error) {
+	abs := filepath.Join(root, filepath.FromSlash(rel))
+	data, err := os.ReadFile(abs)
+	if err != nil {
+		return Doc{}, err
+	}
+	front, body := SplitFrontmatter(data)
+	kv := keyvals(front)
+	d := Doc{
+		RelPath: rel,
+		AbsPath: abs,
+		Code:    kv["code"],
+		Title:   kv["title"],
+		Front:   front,
+		Body:    stripComments(string(body)),
+	}
+	d.H1 = firstH1(d.Body)
+	return d, nil
+}
+
+// ClassifyPatterns splits include patterns into glob patterns (entries with
+// meta characters such as `*`, `?`, `[`, `{`) and link-root directories
+// (plain directory entries without a mask, which are never browsed for
+// documents but act as allowed targets when following internal links).
+func ClassifyPatterns(root string, include []string) (globs, linkRoots []string) {
+	for _, pattern := range include {
+		pat := filepath.ToSlash(filepath.Clean(pattern))
+		if strings.ContainsAny(pat, "*?[{") {
+			globs = append(globs, pat)
+			continue
+		}
+		if strings.HasSuffix(pattern, "/") || isDir(filepath.Join(root, filepath.FromSlash(pat))) {
+			linkRoots = append(linkRoots, pat)
+			continue
+		}
+		globs = append(globs, pat)
+	}
+	return globs, linkRoots
+}
+
+func isDir(p string) bool {
+	info, err := os.Stat(p)
+	return err == nil && info.IsDir()
 }
 
 func isReadme(p string) bool {

@@ -10,14 +10,15 @@ import (
 
 // Config describes a single book build.
 type Config struct {
-	Title      string   `yaml:"title"`
-	Subtitle   string   `yaml:"subtitle"`
-	KBRoot     string   `yaml:"kb_root"`
-	Out        string   `yaml:"out"`
-	TOCLevels  []int    `yaml:"toc_levels"`
-	Include    []string `yaml:"include"`
-	ChromePath string   `yaml:"chrome_path,omitempty"`
-	Locale     string   `yaml:"locale,omitempty"`
+	Title           string   `yaml:"title"`
+	Subtitle        string   `yaml:"subtitle"`
+	KBRoot          string   `yaml:"kb_root"`
+	Out             string   `yaml:"out"`
+	TOCLevels       []int    `yaml:"toc_levels"`
+	Include         []string `yaml:"include"`
+	TransitiveLinks *bool    `yaml:"transitive_links,omitempty"`
+	ChromePath      string   `yaml:"chrome_path,omitempty"`
+	Locale          string   `yaml:"locale,omitempty"`
 }
 
 // Load reads and validates a Config from path. All relative paths are
@@ -67,4 +68,11 @@ func resolveRelative(base, p string) string {
 		return p
 	}
 	return filepath.Join(base, p)
+}
+
+// Transitive reports whether link-follow collection reaches transitively
+// through documents pulled in by links. It defaults to true when the option
+// is omitted from the config.
+func (c *Config) Transitive() bool {
+	return c.TransitiveLinks == nil || *c.TransitiveLinks
 }

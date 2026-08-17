@@ -114,3 +114,48 @@ func TestScanDedupesOverlappingPatterns(t *testing.T) {
 		t.Fatalf("got %v, want first pattern to win and no duplicates", got)
 	}
 }
+
+func TestClassifyPatterns(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "docs/org/README.md", "# Org\n")
+	if err := os.MkdirAll(filepath.Join(dir, "docs", "team"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	globs, linkRoots := ClassifyPatterns(dir, []string{
+		"docs/**/*.md",
+		"docs/org/README.md",
+		"docs/team/",
+		"docs/team",
+		"missing/dir",
+	})
+	wantGlobs := []string{"docs/**/*.md", "docs/org/README.md", "missing/dir"}
+	wantRoots := []string{"docs/team", "docs/team"}
+	if strings.Join(globs, ",") != strings.Join(wantGlobs, ",") {
+		t.Errorf("globs = %v, want %v", globs, wantGlobs)
+	}
+	if strings.Join(linkRoots, ",") != strings.Join(wantRoots, ",") {
+		t.Errorf("linkRoots = %v, want %v", linkRoots, wantRoots)
+	}
+}
+
+func TestLoad(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, "regs/INF-R-001.md", "---\ncode: INF-R-001\ntitle: Инфраструктура\n---\n\n<!-- refs -->\n\n# Заголовок\n\nтекст\n")
+	d, err := Load(dir, "regs/INF-R-001.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Code != "INF-R-001" {
+		t.Errorf("Code = %q", d.Code)
+	}
+	if d.Title != "Инфраструктура" {
+		t.Errorf("Title = %q", d.Title)
+	}
+	if d.H1 != "Заголовок" {
+		t.Errorf("H1 = %q", d.H1)
+	}
+	if strings.Contains(d.Body, "<!-- refs -->") {
+		t.Error("HTML comment leaked into Body")
+	}
+}

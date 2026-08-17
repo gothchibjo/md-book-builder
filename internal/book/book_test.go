@@ -161,3 +161,157 @@ func TestTOCLevelsDocumentsOnly(t *testing.T) {
 		t.Error("H2 heading leaked into TOC with toc_levels [1]")
 	}
 }
+
+func writeLinkRootKB(t *testing.T, dir string) {
+	t.Helper()
+	files := map[string]string{
+		"regulations/README.md": "---\ntype: index\n---\n# Регламенты\n",
+		"regulations/INF/INF-R-001.md": `---
+type: regulation
+code: INF-R-001
+title: Управление инфраструктурой
+---
+
+# Общие положения
+
+См. [ITG-P-001] и [Z-001].
+
+<!-- refs -->
+
+[ITG-P-001]: ../../itg/ITG-P-001.md
+[Z-001]: ../../zzz/Z-001.md
+`,
+		"itg/ITG-P-001.md": `---
+type: regulation
+code: ITG-P-001
+---
+
+# Политика 1
+
+Продолжение в [ITG-P-002].
+
+<!-- refs -->
+
+[ITG-P-002]: ./ITG-P-002.md
+`,
+		"itg/ITG-P-002.md": `---
+type: regulation
+code: ITG-P-002
+---
+
+# Политика 2
+
+Продолжение в [ITG-P-003].
+
+<!-- refs -->
+
+[ITG-P-003]: ./ITG-P-003.md
+`,
+		"itg/ITG-P-003.md": `---
+type: regulation
+code: ITG-P-003
+---
+
+# Политика 3
+`,
+		"zzz/Z-001.md": "---\ntype: regulation\ncode: Z-001\n---\n# Чужой документ\n",
+	}
+	for name, content := range files {
+		path := filepath.Join(dir, name)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func boolPtr(b bool) *bool { return &b }
+
+func TestLinkRootCollectionTransitive(t *testing.T) {
+	dir := t.TempDir()
+	writeLinkRootKB(t, dir)
+
+	cfg := &config.Config{
+		Title:     "Example",
+		KBRoot:    dir,
+		Out:       filepath.Join(dir, "out.pdf"),
+		TOCLevels: []int{1},
+		Include:   []string{"regulations/**/*.md", "itg/"},
+	}
+	b, err := New(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err := b.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	st := doc.Stats
+	if st.Documents != 5 {
+		t.Errorf("Documents = %d, want 5", st.Documents)
+	}
+	if st.InternalLinks != 3 {
+		t.Errorf("InternalLinks = %d, want 3", st.InternalLinks)
+	}
+	if st.Flattened != 1 {
+		t.Errorf("Flattened = %d, want 1", st.Flattened)
+	}
+	if st.BrokenAnchors != 0 {
+		t.Errorf("BrokenAnchors = %d, want 0", st.BrokenAnchors)
+	}
+	if strings.Contains(doc.HTML, `href="#z-001"`) {
+		t.Error("link to zzz/Z-001 must stay flattened (not a link-root)")
+	}
+
+	// Pulled documents are appended after the glob matches, sorted by path.
+	order := []string{"regulations-readme", "inf-r-001", "itg-p-001", "itg-p-002", "itg-p-003"}
+	idx := make([]int, 0, len(order))
+	for _, id := range order {
+		i := strings.Index(doc.HTML, `<section class="book-doc" id="`+id+`"`)
+		if i < 0 {
+			t.Fatalf("section %q missing from output", id)
+		}
+		idx = append(idx, i)
+	}
+	for i := 1; i < len(idx); i++ {
+		if idx[i] < idx[i-1] {
+			t.Fatalf("sections out of order: %v", order)
+		}
+	}
+}
+
+func TestLinkRootCollectionDirectOnly(t *testing.T) {
+	dir := t.TempDir()
+	writeLinkRootKB(t, dir)
+
+	cfg := &config.Config{
+		Title:           "Example",
+		KBRoot:          dir,
+		Out:             filepath.Join(dir, "out.pdf"),
+		TOCLevels:       []int{1},
+		Include:         []string{"regulations/**/*.md", "itg/"},
+		TransitiveLinks: boolPtr(false),
+	}
+	b, err := New(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err := b.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	st := doc.Stats
+	if st.Documents != 3 {
+		t.Errorf("Documents = %d, want 3", st.Documents)
+	}
+	if st.InternalLinks != 1 {
+		t.Errorf("InternalLinks = %d, want 1", st.InternalLinks)
+	}
+	if st.Flattened != 2 {
+		t.Errorf("Flattened = %d, want 2", st.Flattened)
+	}
+}

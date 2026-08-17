@@ -167,3 +167,35 @@ func (r *Renderer) Render(body string) (string, []Heading, error) {
 	copy(hs, r.tr.Headings)
 	return b.String(), hs, nil
 }
+
+// ExtractLinks returns the raw destinations of all links and images in body,
+// as written in the markdown source. Reference definitions are resolved by
+// goldmark, so `[text][ref]` yields the same destination as a direct link.
+// Links written as raw HTML (<a href="...">) are not reported.
+func ExtractLinks(body string) ([]string, error) {
+	src := []byte(body)
+	md := goldmark.New(goldmark.WithExtensions(extension.GFM))
+	doc := md.Parser().Parse(text.NewReader(src))
+	var links []string
+	_ = ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering {
+			return ast.WalkContinue, nil
+		}
+		switch v := n.(type) {
+		case *ast.Link:
+			if len(v.Destination) > 0 {
+				links = append(links, string(v.Destination))
+			}
+		case *ast.Image:
+			if len(v.Destination) > 0 {
+				links = append(links, string(v.Destination))
+			}
+		case *ast.AutoLink:
+			if u := v.URL(src); len(u) > 0 {
+				links = append(links, string(u))
+			}
+		}
+		return ast.WalkContinue, nil
+	})
+	return links, nil
+}

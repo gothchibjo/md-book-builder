@@ -6,6 +6,8 @@
 }
 
 .book-cover {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
+    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   text-align: center;
   padding: 24mm 0 12mm 0;
   break-after: page;
@@ -22,6 +24,8 @@
 }
 
 .book-toc {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
+    Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   break-after: page;
   padding: 0.4em;
 }

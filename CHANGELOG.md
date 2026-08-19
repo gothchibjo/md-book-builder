@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## v0.3.0 - 2026-08-19
+
+### Added
+
+- Link-root collection: a plain directory entry in `include` (e.g.
+  `docs/team/`) now pulls in only the documents referenced by internal links,
+  without browsing the directory. The `transitive_links` config option
+  (default true) controls whether pulled documents are followed further.
+- `exclude` config key to drop specific documents, folders or masks after
+  include and link-root collection; a pattern without a `.md` suffix also
+  matches the file with `.md` appended.
+- `md-book-builder expand` command that prints the collected documents as an
+  include block, so the current page order can be frozen and reordered by
+  editing the generated block.
+- `-o` shorthand for `--out` on the build command.
+
+### Fixed
+
+- Cover and TOC text now inherit the GitHub sans-serif font stack used by the
+  markdown body instead of falling back to the browser default serif.
+
 ## v0.2.0 - 2026-08-12
 
 ### Added
